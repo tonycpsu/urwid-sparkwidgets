@@ -162,6 +162,28 @@ class SparkWidget(urwid.Text):
         else:
             raise Exception("Unknown color scheme mode: %s" %(mode))
 
+    @property
+    def current_color(self):
+
+        return self.colors[0]
+
+    def next_color(self):
+        self.colors.rotate(-1)
+        return self.current_color
+
+    def get_color(self, item):
+        if not self.colors:
+            color = None
+        elif callable(self.colors):
+            color = self.colors(item)
+        elif isinstance(self.colors, collections.Iterable):
+            color = self.current_color
+            self.next_color()
+            return color
+        else:
+            raise Exception(self.colors)
+
+        return color
 
 
 class SparkColumnWidget(SparkWidget):
@@ -203,7 +225,7 @@ class SparkColumnWidget(SparkWidget):
                 return len(self.chars) - 1
             return ((( v - v_min) )) / scale
 
-        def item_to_glyph(item, advance=True):
+        def item_to_glyph(item):
 
             color = None
 
@@ -211,16 +233,8 @@ class SparkColumnWidget(SparkWidget):
                 color = item[0]
                 value = item[1]
             else:
+                color = self.get_color(item)
                 value = item
-                if self.colors:
-                    if callable(self.colors):
-                        color = self.colors(item)
-                    elif isinstance(self.colors, collections.Iterable):
-                        color = self.colors[0]
-                        if advance:
-                            self.colors.rotate(-1)
-                    else:
-                        raise Exception(self.colors)
 
             if self.underline == "negative" and value < 0:
                 glyph = u" \N{COMBINING DOT BELOW}"
@@ -242,8 +256,6 @@ class SparkColumnWidget(SparkWidget):
             else:
                 return glyph
 
-        total = sum(self.values)
-
         self.sparktext = [
             item_to_glyph(i)
             for i in self.items
@@ -252,39 +264,22 @@ class SparkColumnWidget(SparkWidget):
 
 
 
-class SparkBarWidget(urwid.Text):
+class SparkBarWidget(SparkWidget):
     """
     A sparkline-ish horizontal stacked bar widget for Urwid.
     """
 
     chars = BLOCK_HORIZONTAL
 
-    def __init__(self, values, width, color_scheme = [],
+    def __init__(self, items, width,
+                 color_scheme = "mono",
                  *args, **kwargs):
 
-
-        self.color_scheme = deque(color_scheme)
-
-        self.values = [ v[1] if isinstance(v, tuple) else v for v in values ]
-
+        self.items = items
         self.width = width
+        self.colors = self.parse_scheme(color_scheme)
 
-        try:
-            self.colors = deque([ v[0] if isinstance(v, tuple)
-                                  else self.color_scheme.rotate()
-                                  or self.color_scheme[0] for v in values ])
-        except IndexError:
-            self.colors = None
-
-        def colorize(v, advance=True):
-            if isinstance(v, tuple):
-                return v
-            elif self.colors:
-                if advance:
-                    self.colors.rotate(-1)
-                return (self.colors[0], v)
-            else:
-                return v
+        self.values = [ i[1] if isinstance(i, tuple) else i for i in self.items ]
 
         total = sum(self.values)
 
@@ -298,24 +293,43 @@ class SparkBarWidget(urwid.Text):
         charwidth = total / self.width
         nchars = len(self.chars)
 
-        for i, v in enumerate(self.values):
+        for i, item in enumerate(self.items):
 
-            v_scaled = max((v/total*self.width), 1)
-            chars = [ colorize(self.chars[-1]) ]
-            chars[0:1] += [ colorize(self.chars[n], advance=False) for n in range(0, nchars-1)]
+            if isinstance(item, tuple):
+                color = item[0]
+                v = item[1]
+            else:
+                color = self.current_color
+                v = i
+
+            nextidx = (i+1) % len(self.items)
+            if isinstance(self.items[nextidx], tuple):
+                nextcolor = self.items[nextidx][0]
+            else:
+                nextcolor = self.next_color()
+
+            print v, total
+            v_scaled = float(max((v/total*self.width), 1))
+
+            # chars = [ ( self.get_color(v), self.chars[-1]) ]
+            # chars[0:1] += [ (self.get_color(self.chars[n], advance=False),
+            #                  self.chars[n]) for n in range(0, nchars-1)]
 
             charcount = int(v_scaled) if v_scaled.is_integer() else int(math.ceil(v_scaled))
 
             for n in range(0, charcount):
+
                 if n >= charcount - 1  and (v % charwidth):
                     idx = int((v % charwidth)/charwidth * nchars)
-                    c = chars[idx]
+                    char = self.chars[idx]
                     if i < len(self.values) - 1:
-                        c = ("%s:%s" %(c[0], self.colors[i+1]), c[1])
+                        c = ("%s:%s" %(color, nextcolor), char)
+                    print "partial"
                 else:
-                    c = chars[0]
-                    c = ("%s:%s" %(c[0], c[0]), c[1])
+                    char = self.chars[-1]
+                    c = ("%s:%s" %(color, color), char)
+                    print "full"
                 self.sparktext.append(c)
-
+        print
         super(SparkBarWidget, self).__init__(self.sparktext, *args, **kwargs)
 

@@ -51,7 +51,7 @@ for fcolor in random_colors:
 palette = Palette("default", **entries)
 
 spark1 = urwid.Filler(SparkColumnWidget(range(0, 8)))
-spark2 = urwid.Filler(SparkColumnWidget(range(0, 100), color_scheme="rotate_16", ))
+spark2 = urwid.Filler(SparkColumnWidget(range(0, 100), color_scheme="rotate_16"))
 spark3 = urwid.Filler(SparkColumnWidget(range(0, 100), color_scheme="rotate_256"))
 spark4 = urwid.Filler(SparkColumnWidget(range(0, 100), color_scheme="rotate_true"))
 spark5 = urwid.Filler(SparkColumnWidget(range(-5, 100), color_scheme="signed", underline="negative"))
@@ -62,9 +62,15 @@ spark6 = urwid.Filler(SparkColumnWidget([
         for i in range(64)
     ], underline="min", overline="max"))
 
-# bark1 = urwid.Filler(SparkBarWidget([40, 30, 20, 10], 20, color_scheme=DISTINCT_COLORS_HEX))
-# bark2 = urwid.Filler(SparkBarWidget([3, 2, 1], 28, color_scheme=DISTINCT_COLORS_HEX))
-# bark3 = urwid.Filler(SparkBarWidget([55, 15, 35, 12, 19, 10, 10, 10], 19, color_scheme=DISTINCT_COLORS_RGB))
+bark1 = urwid.Filler(SparkBarWidget([40, 30, 20, 10], 20, color_scheme="rotate_16"))
+bark2 = urwid.Filler(SparkBarWidget([3, 2, 1], 28, color_scheme="rotate_true"))
+bark3 = urwid.Filler(SparkBarWidget([19, 42, 17], 9, color_scheme="rotate_true"))
+bark4 = urwid.Filler(SparkBarWidget([
+        (random_colors[i%len(random_colors)],
+         random.randint(1, 30)
+        )
+        for i in range(1, random.randint(4, 10))
+    ], 80))
 
 pile = urwid.Pile([
     (2, spark1),
@@ -73,9 +79,10 @@ pile = urwid.Pile([
     (2, spark4),
     (2, spark5),
     (2, spark6),
-    # (2, bark1),
-    # (2, bark2),
-    # (2, bark3),
+    (2, bark1),
+    (2, bark2),
+    (2, bark3),
+    (2, bark4),
 ])
 
 main = urwid.MainLoop(
