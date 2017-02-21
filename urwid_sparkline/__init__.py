@@ -323,7 +323,8 @@ class SparkBarWidget(SparkWidget):
                 color = item[0]
                 v = item[1]
             else:
-                color = self.next_color()
+                color = self.current_color
+                self.next_color()
                 v = item
 
             # nextidx = (i+1) % len(self.items)
