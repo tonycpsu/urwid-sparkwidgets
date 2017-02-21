@@ -4,7 +4,7 @@ import urwid
 from urwid_utils.palette import *
 import random
 from itertools import chain, izip, repeat, islice
-from urwid_sparkline import *
+from urwid_sparkwidgets import *
 
 
 screen = urwid.raw_display.Screen()
