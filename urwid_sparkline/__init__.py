@@ -308,7 +308,6 @@ class SparkBarWidget(SparkWidget):
             else:
                 nextcolor = self.next_color()
 
-            print v, total
             v_scaled = float(max((v/total*self.width), 1))
 
             # chars = [ ( self.get_color(v), self.chars[-1]) ]
@@ -324,12 +323,10 @@ class SparkBarWidget(SparkWidget):
                     char = self.chars[idx]
                     if i < len(self.values) - 1:
                         c = ("%s:%s" %(color, nextcolor), char)
-                    print "partial"
                 else:
                     char = self.chars[-1]
                     c = ("%s:%s" %(color, color), char)
-                    print "full"
                 self.sparktext.append(c)
-        print
+
         super(SparkBarWidget, self).__init__(self.sparktext, *args, **kwargs)
 
