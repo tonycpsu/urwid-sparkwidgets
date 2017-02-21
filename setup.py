@@ -20,6 +20,6 @@ setup(name=name,
       packages=['urwid_sparkline'],
       data_files=[('share/doc/%s' % name, ['LICENSE','README.md']),
               ],
-      install_requires = ['urwid'],
-      install_requires = ['urwid_utils']
+      install_requires = ['urwid',
+                          'urwid_utils']
      )
