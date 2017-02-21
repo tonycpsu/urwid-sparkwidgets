@@ -275,58 +275,90 @@ class SparkBarWidget(SparkWidget):
                  color_scheme = "mono",
                  *args, **kwargs):
 
+        # print items
         self.items = items
         self.width = width
+        # ugly brute force method to eliminate values too small to display
+
+        values = None
+        total = None
+
+        filtered_items = [ i for i in self.items ]
+        while True:
+            values = [ i[1] if isinstance(i, tuple) else i
+                       for i in filtered_items ]
+            total = sum(values)
+            charwidth = total / self.width
+            # print values, total, charwidth
+            try:
+                i = itertools.ifilter(
+                    lambda i: (i[1] if isinstance(i, tuple) else i) < charwidth,
+                    filtered_items).next()
+                # print "removing",
+                filtered_items.remove(i)
+            except StopIteration:
+                break
+
+        # self.items = items
         self.colors = self.parse_scheme(color_scheme)
 
-        self.values = [ i[1] if isinstance(i, tuple) else i for i in self.items ]
+        # self.values = [ i[1] if isinstance(i, tuple) else i for i in self.items ]
 
-        total = sum(self.values)
-
-        scaled_values = [
-            max((n/total*self.width), 1)
-            for n in self.values
-        ]
+        # total = sum(values)
+        charwidth = total / self.width
+        stepwidth = charwidth / len(self.chars)
 
         self.sparktext = []
 
-        charwidth = total / self.width
+        position = 0
+        carryover = 0
         nchars = len(self.chars)
+        lastcolor = None
 
-        for i, item in enumerate(self.items):
+
+        # print "total: %s, charwidth: %s, stepwidth: %s" %(total, charwidth, stepwidth)
+        for i, item in enumerate(filtered_items):
 
             if isinstance(item, tuple):
                 color = item[0]
                 v = item[1]
             else:
-                color = self.current_color
-                v = i
+                color = self.next_color()
+                v = item
 
-            nextidx = (i+1) % len(self.items)
-            if isinstance(self.items[nextidx], tuple):
-                nextcolor = self.items[nextidx][0]
-            else:
-                nextcolor = self.next_color()
+            # nextidx = (i+1) % len(self.items)
+            # if isinstance(self.items[nextidx], tuple):
+            #     nextcolor = self.items[nextidx][0]
+            # else:
+            #     # raise Exception
+            #     nextcolor = self.next_color()
+            # print color, lastcolor
 
-            v_scaled = float(max((v/total*self.width), 1))
-
-            # chars = [ ( self.get_color(v), self.chars[-1]) ]
-            # chars[0:1] += [ (self.get_color(self.chars[n], advance=False),
-            #                  self.chars[n]) for n in range(0, nchars-1)]
-
-            charcount = int(v_scaled) if v_scaled.is_integer() else int(math.ceil(v_scaled))
-
-            for n in range(0, charcount):
-
-                if n >= charcount - 1  and (v % charwidth):
-                    idx = int((v % charwidth)/charwidth * nchars)
-                    char = self.chars[idx]
-                    if i < len(self.values) - 1:
-                        c = ("%s:%s" %(color, nextcolor), char)
-                else:
-                    char = self.chars[-1]
-                    c = ("%s:%s" %(color, color), char)
+            b = position + v + carryover
+            if(carryover > 0):
+                idx = int(carryover/charwidth * nchars)
+                char = self.chars[idx]
+                c = ("%s:%s" %(lastcolor, color), char)
+                # print "[%s,%s] (idx: %s, char: %s)" %(position, carryover, idx, char)
+                position += charwidth
                 self.sparktext.append(c)
+
+            rangewidth = b - position# + carryover
+            rangechars = int(round(rangewidth/charwidth))
+            # print "rangewidth: %s (%f), rangechars: %s" %(rangewidth, rangewidth/charwidth, rangechars)
+            for i in range(rangechars):
+            # while(position < b):
+                position += charwidth
+                # print "(%s)" %(position)
+                char = self.chars[-1]
+                c = ("%s:%s" %(color, color), char)
+                self.sparktext.append(c)
+                # if position >= b:
+                #     break
+
+            carryover = b - position
+            # print "carrying over: %s" %(carryover)
+            lastcolor = color
 
         super(SparkBarWidget, self).__init__(self.sparktext, *args, **kwargs)
 
