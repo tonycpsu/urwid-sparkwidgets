@@ -122,7 +122,10 @@ def keypress(key):
 
     if key == "b":
         randomize_bark()
-    if key == "s":
+    elif key == "s":
+        randomize_spark()
+    elif key == " ":
+        randomize_bark()
         randomize_spark()
     else:
         return key
