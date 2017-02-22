@@ -203,6 +203,8 @@ class SparkColumnWidget(SparkWidget):
                  underline = None,
                  overline = None,
                  midline = False,
+                 scale_min = None,
+                 scale_max = None,
                  *args, **kwargs):
 
         self.items = items
@@ -217,13 +219,23 @@ class SparkColumnWidget(SparkWidget):
         v_min = min(self.values)
         v_max = max(self.values)
 
-        scale = (v_max - v_min)  / ((len(self.chars) - 1))
 
-        def scale_value(v):
+        def normalize(v, a, b, scale_min=None, scale_max=None):
 
-            if not scale:
-                return len(self.chars) - 1
-            return ((( v - v_min) )) / scale
+            if not scale_min:
+                scale_min = v_min
+
+            if not scale_max:
+                scale_max = v_max
+
+            return max(
+                a,
+                min(
+                    b,
+                    (((v - scale_min) / (scale_max - scale_min) ) * (b - a) + a)
+                )
+            )
+
 
         def item_to_glyph(item):
 
@@ -239,7 +251,12 @@ class SparkColumnWidget(SparkWidget):
             if self.underline == "negative" and value < 0:
                 glyph = u" \N{COMBINING DOT BELOW}"
             else:
-                idx = scale_value(value)
+
+
+                # idx = scale_value(value, scale_min=scale_min, scale_max=scale_max)
+                idx = normalize(value, 0, len(self.chars)-1,
+                                  scale_min=scale_min, scale_max=scale_max)
+
                 glyph = self.chars[int(round(idx))]
 
                 if self.underline == "min" and value == v_min:
@@ -275,36 +292,29 @@ class SparkBarWidget(SparkWidget):
                  color_scheme = "mono",
                  *args, **kwargs):
 
-        # print items
         self.items = items
         self.width = width
-        # ugly brute force method to eliminate values too small to display
 
         values = None
         total = None
 
         filtered_items = [ i for i in self.items ]
+        # ugly brute force method to eliminate values too small to display
         while True:
             values = [ i[1] if isinstance(i, tuple) else i
                        for i in filtered_items ]
             total = sum(values)
             charwidth = total / self.width
-            # print values, total, charwidth
             try:
                 i = itertools.ifilter(
                     lambda i: (i[1] if isinstance(i, tuple) else i) < charwidth,
                     filtered_items).next()
-                # print "removing",
                 filtered_items.remove(i)
             except StopIteration:
                 break
 
-        # self.items = items
         self.colors = self.parse_scheme(color_scheme)
 
-        # self.values = [ i[1] if isinstance(i, tuple) else i for i in self.items ]
-
-        # total = sum(values)
         charwidth = total / self.width
         stepwidth = charwidth / len(self.chars)
 
@@ -316,7 +326,6 @@ class SparkBarWidget(SparkWidget):
         lastcolor = None
 
 
-        # print "total: %s, charwidth: %s, stepwidth: %s" %(total, charwidth, stepwidth)
         for i, item in enumerate(filtered_items):
 
             if isinstance(item, tuple):
@@ -326,14 +335,6 @@ class SparkBarWidget(SparkWidget):
                 color = self.current_color
                 self.next_color()
                 v = item
-
-            # nextidx = (i+1) % len(self.items)
-            # if isinstance(self.items[nextidx], tuple):
-            #     nextcolor = self.items[nextidx][0]
-            # else:
-            #     # raise Exception
-            #     nextcolor = self.next_color()
-            # print color, lastcolor
 
             b = position + v + carryover
             if(carryover > 0):
@@ -346,11 +347,9 @@ class SparkBarWidget(SparkWidget):
 
             rangewidth = b - position# + carryover
             rangechars = int(round(rangewidth/charwidth))
-            # print "rangewidth: %s (%f), rangechars: %s" %(rangewidth, rangewidth/charwidth, rangechars)
+
             for i in range(rangechars):
-            # while(position < b):
                 position += charwidth
-                # print "(%s)" %(position)
                 char = self.chars[-1]
                 c = ("%s:%s" %(color, color), char)
                 self.sparktext.append(c)
@@ -358,7 +357,6 @@ class SparkBarWidget(SparkWidget):
                 #     break
 
             carryover = b - position
-            # print "carrying over: %s" %(carryover)
             lastcolor = color
 
         super(SparkBarWidget, self).__init__(self.sparktext, *args, **kwargs)

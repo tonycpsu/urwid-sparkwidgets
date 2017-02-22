@@ -55,7 +55,7 @@ def intersperse(delimiter, seq):
 palette = Palette("default", **entries)
 
 spark1 = urwid.Filler(SparkColumnWidget(range(0, 8)))
-spark2 = urwid.Filler(SparkColumnWidget(range(0, 100), color_scheme="rotate_16"))
+spark2 = urwid.Filler(SparkColumnWidget(range(0, 100), color_scheme="rotate_16", scale_min=20, scale_max=90))
 spark3 = urwid.Filler(SparkColumnWidget([5*random.random() for i in range(0, 100)], color_scheme="rotate_true"))
 spark4 = urwid.Filler(SparkColumnWidget(range(-5, 100), color_scheme="signed", underline="negative"))
 spark_random_text = urwid.Filler(urwid.Text(""))
@@ -85,22 +85,6 @@ def get_random_bark():
         for i in range(1, random.randint(4, 30))
     ], 80)
 
-
-pile = urwid.Pile([
-    (2, spark1),
-    (2, spark2),
-    (2, spark3),
-    (2, spark4),
-    (2, spark_random_text),
-    (2, spark_random_ph),
-    (2, bark1),
-    (2, bark2),
-    (2, bark3),
-    (2, bark4),
-    (2, bark_random_text),
-    (2, bark_random_ph),
-])
-
 def randomize_spark():
     spark = get_random_spark()
     filler = urwid.Filler(spark)
@@ -115,27 +99,50 @@ def randomize_bark():
     bark_random_text.original_widget.set_text(values)
     bark_random_ph.original_widget = filler
 
-randomize_bark()
-randomize_spark()
 
-def keypress(key):
+def main():
 
-    if key == "b":
-        randomize_bark()
-    elif key == "s":
-        randomize_spark()
-    elif key == " ":
-        randomize_bark()
-        randomize_spark()
-    else:
-        return key
+    pile = urwid.Pile([
+        (2, spark1),
+        (2, spark2),
+        (2, spark3),
+        (2, spark4),
+        (2, spark_random_text),
+        (2, spark_random_ph),
+        (2, bark1),
+        (2, bark2),
+        (2, bark3),
+        (2, bark4),
+        (2, bark_random_text),
+        (2, bark_random_ph),
+    ])
+
+    randomize_bark()
+    randomize_spark()
+
+    def keypress(key):
+
+        if key == "b":
+            randomize_bark()
+        elif key == "s":
+            randomize_spark()
+        elif key == " ":
+            randomize_bark()
+            randomize_spark()
+        elif key == "q":
+            raise urwid.ExitMainLoop()
+        else:
+            return key
 
 
-main = urwid.MainLoop(
-    pile,
-    palette = palette,
-    screen = screen,
-    unhandled_input = keypress
-)
+    loop = urwid.MainLoop(
+        pile,
+        palette = palette,
+        screen = screen,
+        unhandled_input = keypress
+    )
 
-main.run()
+    loop.run()
+
+if __name__ == "__main__":
+    main()
