@@ -56,7 +56,7 @@ palette = Palette("default", **entries)
 
 spark1 = urwid.Filler(SparkColumnWidget(range(0, 8)))
 spark2 = urwid.Filler(SparkColumnWidget(range(0, 100), color_scheme="rotate_16"))
-spark3 = urwid.Filler(SparkColumnWidget(range(0, 100), color_scheme="rotate_true"))
+spark3 = urwid.Filler(SparkColumnWidget([5*random.random() for i in range(0, 100)], color_scheme="rotate_true"))
 spark4 = urwid.Filler(SparkColumnWidget(range(-5, 100), color_scheme="signed", underline="negative"))
 spark_random_text = urwid.Filler(urwid.Text(""))
 spark_random_ph = urwid.WidgetPlaceholder(urwid.Text(""))

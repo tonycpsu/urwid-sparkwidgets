@@ -217,7 +217,7 @@ class SparkColumnWidget(SparkWidget):
         v_min = min(self.values)
         v_max = max(self.values)
 
-        scale = int(v_max - v_min)  / (len(self.chars) - 1)
+        scale = (v_max - v_min)  / ((len(self.chars) - 1))
 
         def scale_value(v):
 
@@ -239,8 +239,8 @@ class SparkColumnWidget(SparkWidget):
             if self.underline == "negative" and value < 0:
                 glyph = u" \N{COMBINING DOT BELOW}"
             else:
-                index = scale_value(value)
-                glyph = self.chars[int(round(index))]
+                idx = scale_value(value)
+                glyph = self.chars[int(round(idx))]
 
                 if self.underline == "min" and value == v_min:
                     glyph = u"%s\N{COMBINING TRIPLE UNDERDOT}" %(glyph)
