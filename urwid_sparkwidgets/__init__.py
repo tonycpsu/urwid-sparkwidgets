@@ -1,8 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
+
+"""
+```urwid-sparkwidgets```
+========================
+
+A set of sparkline-ish widgets for urwid
+
+This module contains a set of urwid text-like widgets for creating tiny but
+hopefully useful sparkline-like visualizations of data.
+"""
+
+
 from __future__ import division
 import urwid
-from urwid.display_common import _CUBE_256_LOOKUP_16, _CUBE_STEPS_256_16
 from urwid_utils.palette import *
 from collections import deque
 import random
@@ -13,12 +25,6 @@ import collections
 
 BLOCK_VERTICAL = [ unichr(x) for x in range(0x2581, 0x2589) ]
 BLOCK_HORIZONTAL = [ unichr(x) for x in range(0x258F, 0x2587, -1) ]
-
-# DISTINCT_COLORS_16 = [
-#             "white", "light red", "light blue", "light magenta",
-#             "light green", "light cyan", "yellow", "dark gray",
-#             "dark blue", "dark magenta", "dark green", "light gray",
-#             "dark cyan", "brown", "dark red" ]
 
 DISTINCT_COLORS_16 = urwid.display_common._BASIC_COLORS[1:]
 
@@ -197,17 +203,41 @@ class SparkColumnWidget(SparkWidget):
     vertical bar graph of the values, one character per value.  Column segments
     can be colorized according to a color scheme or by assigning each
     value a color.
+
+    :param items: A list of items to be charted in the widget.  Items can be
+    either numeric values or tuples, the latter of which must be of the form
+    ('attribute', value) where attribute is an urwid text attribute and value
+    is a numeric value.
+
+    :param color_scheme: A string or dictionary containing the name of or
+    definition of a color scheme for the widget.
+
+    :param underline: one of None, "negative", or "min", specifying values that
+    should be marked in the chart.  "negative" shows negative values as little
+    dots at the bottom of the chart, while "min" uses a unicode combining
+    three dots character to indicate minimum values.  Results of this and the
+    rest of these parameters may not look great with all terminals / fonts,
+    so if this looks weird, don't use it.
+
+    :param overline: one of None or "max" specfying values that should be marked
+    in the chart.  "max" draws three dots above the max value.  See underline
+    description for caveats.
+
+    :param scale_min: Set a minimum scale for the chart.  By default, the range
+    of the chart's Y axis will expand to show all values, but this parameter
+    can be used to restrict or expand the Y-axis.
+
+    :param scale_max: Set the maximum for the Y axis. -- see scale_min.
     """
 
     chars = BLOCK_VERTICAL
 
     def __init__(self, items,
                  color_scheme = "mono",
-                 underline = None,
-                 overline = None,
-                 midline = False,
                  scale_min = None,
                  scale_max = None,
+                 underline = None,
+                 overline = None,
                  *args, **kwargs):
 
         self.items = items
@@ -215,7 +245,6 @@ class SparkColumnWidget(SparkWidget):
 
         self.underline = underline
         self.overline = overline
-        self.midline = midline
 
         self.values = [ i[1] if isinstance(i, tuple) else i for i in self.items ]
 
@@ -268,9 +297,6 @@ class SparkColumnWidget(SparkWidget):
                 if self.overline == "max" and value == v_max:
                     glyph = u"%s\N{COMBINING THREE DOTS ABOVE}" %(glyph)
 
-                # if self.midline:
-                #     glyph = u"%s\N{COMBINING LONG STROKE OVERLAY}" %(glyph)
-
             if color:
                 return (color, glyph)
             else:
@@ -287,6 +313,18 @@ class SparkColumnWidget(SparkWidget):
 class SparkBarWidget(SparkWidget):
     """
     A sparkline-ish horizontal stacked bar widget for Urwid.
+
+    This widget graphs a set of values in a horizontal bar style.
+
+    :param items: A list of items to be charted in the widget.  Items can be
+    either numeric values or tuples, the latter of which must be of the form
+    ('attribute', value) where attribute is an urwid text attribute and value
+    is a numeric value.
+
+    :param width: Width of the widget in characters.
+
+    :param color_scheme: A string or dictionary containing the name of or
+    definition of a color scheme for the widget.
     """
 
     chars = BLOCK_HORIZONTAL

@@ -58,6 +58,9 @@ spark1 = urwid.Filler(SparkColumnWidget(range(0, 8)))
 spark2 = urwid.Filler(SparkColumnWidget(range(0, 100), color_scheme="rotate_16", scale_min=20, scale_max=90))
 spark3 = urwid.Filler(SparkColumnWidget([5*random.random() for i in range(0, 100)], color_scheme="rotate_true"))
 spark4 = urwid.Filler(SparkColumnWidget(range(-5, 100), color_scheme="signed", underline="negative"))
+custom_scheme ={ "mode": "rotate",  "colors": ["dark cyan", "brown", "dark magenta"]}
+spark5 = urwid.Filler(SparkColumnWidget(range(1, 20), color_scheme=custom_scheme))
+
 spark_random_text = urwid.Filler(urwid.Text(""))
 spark_random_ph = urwid.WidgetPlaceholder(urwid.Text(""))
 
@@ -107,6 +110,7 @@ def main():
         (2, spark2),
         (2, spark3),
         (2, spark4),
+        (2, spark5),
         (2, spark_random_text),
         (2, spark_random_ph),
         (2, bark1),

@@ -1,4 +1,5 @@
-urwid-sparkline
-===============
+urwid-sparkwidgets
+==================
 
-A set of sparkline widgets for urwid
+A set of sparkline-ish widgets for urwid
+
