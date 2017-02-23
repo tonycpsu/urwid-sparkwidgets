@@ -10,7 +10,7 @@ elements.
 Currently consists of two widgets:
 
 * ```SparkColumnWidget``` is a column chart.  Segments can be explicitly
-givenurwid display attributes, or can be assigned colors and other attributes
+given urwid display attributes, or can be assigned colors and other attributes
 according to a rotating color scheme or based on rules (e.g. negative values in
 red).  By default the Y-axis scales to fit all values, but minimum and maximum
 values for the Y-axis scale can also be provided -- this might not seem useful
@@ -26,6 +26,10 @@ TODOs:
 * Allow for user-defined character schemes for the bar widget.  Unicode block
 elements are most useful for increasing the resolution of the chart over typical
 ASCII block art, but it'd be nice to be able to do something like
-```******@@@@@@@@#####%%%%" for compatibility with non-color displays.
+```******@@@@@@@@#####%%%%``` for compatibility with non-color displays.
 * Support log scale.
 * Labels in bar chart?
+
+Here are some examples of what the charts look like:
+
+![Output sample](doc/screencast.gif)
