@@ -142,12 +142,15 @@ class SparkWidget(urwid.Text):
         return rule_function
 
 
-    def parse_scheme(self, name):
+    def parse_scheme(self, scheme):
 
-        try:
-            color_scheme = COLOR_SCHEMES[name]
-        except:
-            raise Exception("Unknown color scheme: %s" %(name))
+        if isinstance(scheme, dict):
+            color_scheme = scheme
+        else:
+            try:
+                color_scheme = COLOR_SCHEMES[scheme]
+            except:
+                raise Exception("Unknown color scheme: %s" %(scheme))
 
         mode = color_scheme["mode"]
         if mode == "mono":
@@ -341,7 +344,6 @@ class SparkBarWidget(SparkWidget):
                 idx = int(carryover/charwidth * nchars)
                 char = self.chars[idx]
                 c = ("%s:%s" %(lastcolor, color), char)
-                # print "[%s,%s] (idx: %s, char: %s)" %(position, carryover, idx, char)
                 position += charwidth
                 self.sparktext.append(c)
 
@@ -353,8 +355,6 @@ class SparkBarWidget(SparkWidget):
                 char = self.chars[-1]
                 c = ("%s:%s" %(color, color), char)
                 self.sparktext.append(c)
-                # if position >= b:
-                #     break
 
             carryover = b - position
             lastcolor = color
