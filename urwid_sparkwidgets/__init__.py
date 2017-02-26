@@ -466,12 +466,12 @@ class SparkBarWidget(SparkWidget):
 
             for i in range(rangechars):
                 position += charwidth
-                if label and i < len(label):
-                    if len(label) <= rangechars:
-                        fcolor = lcolor
+                if label:
+                    fcolor = lcolor
+                    if i < len(label) and i < rangechars -1:
+                    # if len(label) <= rangechars:
                         char = label[i]
-                    elif i == 0:
-                        fcolor = lcolor
+                    elif len(label) > rangechars - 1: #and i == rangechars:
                         char = u"\N{HORIZONTAL ELLIPSIS}"
                     else:
                         char = " "
@@ -479,7 +479,8 @@ class SparkBarWidget(SparkWidget):
                 #     fcolor = lcolor
                 else:
                     fcolor = bcolor
-                    char = self.chars[-1]
+                    char = " "
+                    # char = self.chars[-1]
                 c = ("%s:%s" %(fcolor, bcolor), char)
                 self.sparktext.append(c)
 
