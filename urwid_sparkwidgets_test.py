@@ -119,11 +119,11 @@ def get_random_bark():
     return SparkBarWidget([
         (bcolors[i],
          randos[i],
-         randos[i],
+         chr(64+i),
          lcolors[i]
         )
         for i in range(1, num)
-    ], width=80)
+    ], width=80, label_values=True)
 
 def randomize_spark():
     spark = get_random_spark()

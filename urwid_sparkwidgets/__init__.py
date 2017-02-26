@@ -396,11 +396,13 @@ class SparkBarWidget(SparkWidget):
     def __init__(self, items, width,
                  color_scheme = "mono",
                  label_color = None,
+                 label_values = False,
                  *args, **kwargs):
 
         self.items = items
         self.width = width
         self.label_color = label_color
+        self.label_values = label_values
 
         VALUES = None
         total = None
@@ -435,11 +437,15 @@ class SparkBarWidget(SparkWidget):
         for i, item in enumerate(filtered_items):
 
             label = None
+            label_len = 0
             if isinstance(item, tuple):
                 bcolor = item[0]
                 v = item[1]
                 if len(item) > 2:
                     label = str(item[2])
+                    label_len = len(label)
+                    if self.label_values:
+                        label += ":%s" %(v)
                     if len(item) > 3:
                         lcolor = item[3]
                     elif label_color:
@@ -468,7 +474,7 @@ class SparkBarWidget(SparkWidget):
                 position += charwidth
                 if label:
                     fcolor = lcolor
-                    if i < len(label) and i < rangechars -1:
+                    if (i < len(label) and i < rangechars -1) or (i < label_len):
                     # if len(label) <= rangechars:
                         char = label[i]
                     elif len(label) > rangechars - 1: #and i == rangechars:
