@@ -25,6 +25,10 @@ import collections
 BLOCK_VERTICAL = [ unichr(x) for x in range(0x2581, 0x2589) ]
 BLOCK_HORIZONTAL = [ unichr(x) for x in range(0x258F, 0x2587, -1) ]
 
+DEFAULT_LABEL_COLOR = "light gray"
+DEFAULT_LABEL_COLOR_DARK = "black"
+DEFAULT_LABEL_COLOR_LIGHT = "white"
+
 DISTINCT_COLORS_16 = urwid.display_common._BASIC_COLORS[1:]
 
 DISTINCT_COLORS_256 = [
@@ -73,7 +77,10 @@ COLOR_SCHEMES = {
     }
 }
 
-def get_palette_entries():
+def get_palette_entries(
+        chart_colors = None,
+        label_colors = None
+):
 
     NORMAL_FG_MONO = "white"
     NORMAL_FG_16 = "light gray"
@@ -83,41 +90,99 @@ def get_palette_entries():
 
     palette_entries = {}
 
-    for fcolor in (urwid.display_common._BASIC_COLORS
-                   + DISTINCT_COLORS_256
-                   + DISTINCT_COLORS_TRUE):
+    if not label_colors:
+        label_colors = list(set([
+            DEFAULT_LABEL_COLOR,
+            DEFAULT_LABEL_COLOR_DARK,
+            DEFAULT_LABEL_COLOR_LIGHT
+        ]))
+
+
+    if chart_colors:
+        colors = chart_colors
+    else:
+        colors = (urwid.display_common._BASIC_COLORS
+                  + DISTINCT_COLORS_256
+                  + DISTINCT_COLORS_TRUE )
+
+    fcolors = colors + label_colors
+    bcolors = colors
+
+    for fcolor in fcolors:
+        if isinstance(fcolor, PaletteEntry):
+            fname = fcolor.name
+            ffg = fcolor.foreground
+            fbg = NORMAL_BG_16
+            ffghi = fcolor.foreground_high
+            fbghi = NORMAL_BG_256
+        else:
+            fname = fcolor
+            ffg = (fcolor
+                  if fcolor in urwid.display_common._BASIC_COLORS
+                  else NORMAL_FG_16)
+            fbg = NORMAL_BG_16
+            ffghi = fcolor
+            fbghi = NORMAL_BG_256
 
         palette_entries.update({
-            fcolor: PaletteEntry(
+            fname: PaletteEntry(
+                name = fname,
                 mono = NORMAL_FG_MONO,
-                foreground = (fcolor
-                              if fcolor in urwid.display_common._BASIC_COLORS
-                              else NORMAL_FG_16),
-                background = NORMAL_BG_16,
-                foreground_high = fcolor,
-                background_high = NORMAL_BG_256
+                foreground = ffg,
+                background = fbg,
+                foreground_high = ffghi,
+                background_high = fbghi
             ),
         })
 
-        for bcolor in (urwid.display_common._BASIC_COLORS
-                       + DISTINCT_COLORS_256
-                       + DISTINCT_COLORS_TRUE):
+        for bcolor in bcolors:
+
+            if isinstance(bcolor, PaletteEntry):
+                bname = "%s:%s" %(fname, bcolor.name)
+                bfg = ffg
+                bbg = bcolor.background
+                bfghi = ffghi
+                bbghi = bcolor.background_high
+            else:
+                bname = "%s:%s" %(fname, bcolor)
+                bfg = fcolor
+                bbg = bcolor
+                bfghi = fcolor
+                bbghi = bcolor
 
             palette_entries.update({
-                "%s:%s" %(fcolor, bcolor): PaletteEntry(
+                bname: PaletteEntry(
+                    name = bname,
                     mono = NORMAL_FG_MONO,
-                    foreground = (fcolor
-                                  if fcolor in urwid.display_common._BASIC_COLORS
-                                  else NORMAL_FG_16),
-                    background = (bcolor
-                                  if bcolor in urwid.display_common._BASIC_COLORS
+                    foreground = (bfg
+                                  if bfg in urwid.display_common._BASIC_COLORS
                                   else NORMAL_BG_16),
-                    foreground_high = fcolor,
-                    background_high = bcolor
+                    background = (bbg
+                                  if bbg in urwid.display_common._BASIC_COLORS
+                                  else NORMAL_BG_16),
+                    foreground_high = bfghi,
+                    background_high = bbghi
                 ),
             })
 
     return palette_entries
+
+
+def get_label_color(color,
+                    dark=DEFAULT_LABEL_COLOR_DARK,
+                    light=DEFAULT_LABEL_COLOR_LIGHT):
+    # http://jsfiddle.net/cu4z27m7/66/
+    (r, g, b) = urwid.AttrSpec(color, color).get_rgb_values()[:3]
+    colors = [r / 255, g / 255, b / 255]
+    c = [ (c / 12.92)
+          if c < 0.03928
+          else ((c + 0.055) / 1.055)**2.4
+          for c in colors ]
+
+    L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+    return dark if L > 0.179 else light
+
+
 
 OPERATOR_MAP = {
     "<": operator.lt,
@@ -330,12 +395,14 @@ class SparkBarWidget(SparkWidget):
 
     def __init__(self, items, width,
                  color_scheme = "mono",
+                 label_color = None,
                  *args, **kwargs):
 
         self.items = items
         self.width = width
+        self.label_color = label_color
 
-        values = None
+        VALUES = None
         total = None
 
         filtered_items = [ i for i in self.items ]
@@ -365,14 +432,24 @@ class SparkBarWidget(SparkWidget):
         nchars = len(self.chars)
         lastcolor = None
 
-
         for i, item in enumerate(filtered_items):
 
+            label = None
             if isinstance(item, tuple):
-                color = item[0]
+                bcolor = item[0]
                 v = item[1]
+                if len(item) > 2:
+                    label = str(item[2])
+                    if len(item) > 3:
+                        lcolor = item[3]
+                    elif label_color:
+                        lcolor = label_color
+                    else:
+                        lcolor = DEFAULT_LABEL_COLOR
+
             else:
-                color = self.current_color
+                fcolor = bcolor = self.current_color
+                # bcolor = self.current_color
                 self.next_color()
                 v = item
 
@@ -380,7 +457,7 @@ class SparkBarWidget(SparkWidget):
             if(carryover > 0):
                 idx = int(carryover/charwidth * nchars)
                 char = self.chars[idx]
-                c = ("%s:%s" %(lastcolor, color), char)
+                c = ("%s:%s" %(lastcolor, bcolor), char)
                 position += charwidth
                 self.sparktext.append(c)
 
@@ -389,12 +466,26 @@ class SparkBarWidget(SparkWidget):
 
             for i in range(rangechars):
                 position += charwidth
-                char = self.chars[-1]
-                c = ("%s:%s" %(color, color), char)
+                if label and i < len(label):
+                    if len(label) <= rangechars:
+                        fcolor = lcolor
+                        char = label[i]
+                    elif i == 0:
+                        fcolor = lcolor
+                        char = u"\N{HORIZONTAL ELLIPSIS}"
+                    else:
+                        char = " "
+                # elif label and i == 0:
+                #     fcolor = lcolor
+                else:
+                    fcolor = bcolor
+                    char = self.chars[-1]
+                c = ("%s:%s" %(fcolor, bcolor), char)
                 self.sparktext.append(c)
 
             carryover = b - position
-            lastcolor = color
+            lastcolor = bcolor
 
+        if not self.sparktext:
+            self.sparktext = ""
         super(SparkBarWidget, self).__init__(self.sparktext, *args, **kwargs)
-

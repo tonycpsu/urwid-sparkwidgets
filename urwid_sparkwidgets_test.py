@@ -10,13 +10,33 @@ from urwid_sparkwidgets import *
 screen = urwid.raw_display.Screen()
 screen.set_terminal_properties(1<<24)
 
-entries = get_palette_entries()
+LABEL_COLOR_DARK = "black"
+LABEL_COLOR_LIGHT = "white"
+
+entries = {}
+
 
 all_colors = [ urwid.display_common._color_desc_256(x)
-                   for x in range(32,255) ]
+                   for x in range(32,224) ]
 random_colors = [ random.choice(all_colors) for i in range(16) ]
 
-for fcolor in random_colors:
+label_colors = [ LABEL_COLOR_DARK, LABEL_COLOR_LIGHT ]
+
+entries.update(
+    get_palette_entries(
+        label_colors = label_colors
+    )
+)
+
+entries.update(
+    get_palette_entries(
+        chart_colors = random_colors,
+        label_colors = label_colors
+    )
+)
+
+
+for fcolor in random_colors + label_colors:
 
     entries.update({
         fcolor: PaletteEntry(
@@ -69,7 +89,9 @@ bark2 = urwid.Filler(SparkBarWidget([40, 30, 20, 10], 20, color_scheme="rotate_t
 bark3 = urwid.Filler(SparkBarWidget([3, 2, 1], 28, color_scheme="rotate_true"))
 bark4 = urwid.Filler(SparkBarWidget([19, 42, 17], 9, color_scheme="rotate_true"))
 bark5 = urwid.Filler(SparkBarWidget([
-    ("light red", 19), ("light green", 42), ("light blue", 17)
+    ("light red", 19, "foo"),
+    ("light green", 42, "bar"),
+    ("light blue", 17, "baz")
 ], 20))
 bark_random_text = urwid.Filler(urwid.Text(""))
 bark_random_ph = urwid.WidgetPlaceholder(urwid.Text(""))
@@ -78,18 +100,30 @@ bark_random_ph = urwid.WidgetPlaceholder(urwid.Text(""))
 def get_random_spark():
     return SparkColumnWidget([
         (random_colors[i%len(random_colors)],
-         random.randint(1, 100)
+         random.randint(1, 100),
         )
         for i in range(32)
     ], underline="min", overline="max")
 
 def get_random_bark():
+    num = random.randint(4, 30)
+    bcolors = [ random_colors[i%len(random_colors)] for i in range(num)]
+    lcolors = [
+        get_label_color(bcolor)
+        for bcolor in bcolors
+    ]
+    # raise Exception(lcolors)
+    # r, g, b = a.get_rgb_values()[:3]
+    # lcolor = get_label_color(r, g, b)
+    randos = [ random.randint(1,100) for i in range(0, num) ]
     return SparkBarWidget([
-        (random_colors[i%len(random_colors)],
-         random.randint(1, 30)
+        (bcolors[i],
+         randos[i],
+         randos[i],
+         lcolors[i]
         )
-        for i in range(1, random.randint(4, 30))
-    ], 80)
+        for i in range(1, num)
+    ], width=80)
 
 def randomize_spark():
     spark = get_random_spark()
