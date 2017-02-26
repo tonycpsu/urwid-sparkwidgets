@@ -17,7 +17,6 @@ from __future__ import division
 import urwid
 from urwid_utils.palette import *
 from collections import deque
-import random
 import math
 import operator
 import itertools
