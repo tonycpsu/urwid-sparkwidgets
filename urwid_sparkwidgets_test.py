@@ -106,7 +106,7 @@ def get_random_spark():
     ], underline="min", overline="max")
 
 def get_random_bark():
-    num = random.randint(4, 30)
+    num = random.randint(4, 40)
     bcolors = [ random_colors[i%len(random_colors)] for i in range(num)]
     lcolors = [
         get_label_color(bcolor)
@@ -115,15 +115,18 @@ def get_random_bark():
     # raise Exception(lcolors)
     # r, g, b = a.get_rgb_values()[:3]
     # lcolor = get_label_color(r, g, b)
-    randos = [ random.randint(1,100) for i in range(0, num) ]
+    randos = [ random.randint(50,150) for i in range(0, num) ]
     return SparkBarWidget([
         (bcolors[i],
          randos[i],
-         chr(64+i),
-         lcolors[i]
+         # (chr(65+i if i < 26 else 71 + i))
+         # (None, True)
+         # (chr(65+i if i < 26 else 71 + i), True)
+         # (chr(65+i if i < 26 else 71 + i), False, lcolors[i])
+         ("%s" %(chr(65+i if i < 26 else 71 + i)), True, lcolors[i])
         )
-        for i in range(1, num)
-    ], width=80, label_values=True)
+        for i in range(0, num)
+    ], width=80, label_color="black")
 
 def randomize_spark():
     spark = get_random_spark()

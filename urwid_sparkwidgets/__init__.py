@@ -404,7 +404,7 @@ class SparkBarWidget(SparkWidget):
         self.label_color = label_color
         self.label_values = label_values
 
-        VALUES = None
+        values = None
         total = None
 
         filtered_items = [ i for i in self.items ]
@@ -436,28 +436,38 @@ class SparkBarWidget(SparkWidget):
 
         for i, item in enumerate(filtered_items):
 
+            text = ""
+            textcolor = self.label_color or DEFAULT_LABEL_COLOR
             label = None
-            label_len = 0
+            label_value = False
+            # label_len = 0
             if isinstance(item, tuple):
                 bcolor = item[0]
                 v = item[1]
                 if len(item) > 2:
-                    label = str(item[2])
-                    label_len = len(label)
-                    if self.label_values:
-                        label += ":%s" %(v)
-                    if len(item) > 3:
-                        lcolor = item[3]
-                    elif label_color:
-                        lcolor = label_color
-                    else:
-                        lcolor = DEFAULT_LABEL_COLOR
+                    labeldef = item[2]
+                    if isinstance(labeldef, tuple):
+                        label = labeldef[0]
+                        if len(labeldef) > 1:
+                            label_value = labeldef[1]
+                            if len(labeldef) > 2:
+                                textcolor = labeldef[2]
+                    elif isinstance(labeldef, str):
+                        label = labeldef
 
             else:
                 fcolor = bcolor = self.current_color
                 # bcolor = self.current_color
                 self.next_color()
                 v = item
+
+            if label:
+                text += label
+
+            if label_value:
+                if label:
+                    text += ":"
+                text += str(v)
 
             b = position + v + carryover
             if(carryover > 0):
@@ -472,17 +482,15 @@ class SparkBarWidget(SparkWidget):
 
             for i in range(rangechars):
                 position += charwidth
-                if label:
-                    fcolor = lcolor
-                    if (i < len(label) and i < rangechars -1) or (i < label_len):
+                if text:
+                    fcolor = textcolor
+                    if (i < len(text) and i < rangechars -1) or (text and i == len(text) -1):
                     # if len(label) <= rangechars:
-                        char = label[i]
-                    elif len(label) > rangechars - 1: #and i == rangechars:
+                        char = text[i]
+                    elif len(text) > rangechars - 1: #and i == rangechars:
                         char = u"\N{HORIZONTAL ELLIPSIS}"
                     else:
                         char = " "
-                # elif label and i == 0:
-                #     fcolor = lcolor
                 else:
                     fcolor = bcolor
                     char = " "
