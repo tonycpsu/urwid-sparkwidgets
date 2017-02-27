@@ -480,24 +480,25 @@ class SparkBarWidget(SparkWidget):
             rangewidth = b - position# + carryover
             rangechars = int(round(rangewidth/charwidth))
 
-            for i in range(rangechars):
-                position += charwidth
-                if text:
-                    fcolor = textcolor
-                    if (i < len(text) and i < rangechars -1) or (text and i == len(text) -1):
-                    # if len(label) <= rangechars:
-                        char = text[i]
-                    elif len(text) > rangechars - 1: #and i == rangechars:
-                        char = u"\N{HORIZONTAL ELLIPSIS}"
-                    else:
-                        char = " "
-                else:
-                    fcolor = bcolor
-                    char = " "
-                    # char = self.chars[-1]
-                c = ("%s:%s" %(fcolor, bcolor), char)
-                self.sparktext.append(c)
+            if text and rangechars:
+                fcolor = textcolor
+                chars = u"{:<{m}.{m}}{lastchar}".format(
+                    u"{text:.{n}}".format(
+                        text = text,
+                        n = min(len(text), rangechars-1),
+                    ), m=rangechars-1,
+                    lastchar = u"\N{HORIZONTAL ELLIPSIS}"
+                    if len(text) > rangechars
+                    else text[rangechars-1]
+                    if len(text) == rangechars
+                    else " "
+                )
+            else:
+                fcolor = bcolor
+                chars = " "*rangechars
+            position += rangechars*charwidth
 
+            self.sparktext.append(("%s:%s" %(fcolor, bcolor), chars))
             carryover = b - position
             lastcolor = bcolor
 
