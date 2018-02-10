@@ -212,6 +212,24 @@ class SparkWidget(urwid.Text):
         return rule_function
 
 
+    @staticmethod
+    def normalize(v, a, b, scale_min, scale_max):
+
+        # if not scale_min:
+        #     scale_min = v_min
+
+        # if not scale_max:
+        #     scale_max = v_max
+
+        return max(
+            a,
+            min(
+                b,
+                (((v - scale_min) / (scale_max - scale_min) ) * (b - a) + a)
+            )
+        )
+
+
     def parse_scheme(self, scheme):
 
         if isinstance(scheme, dict):
@@ -316,23 +334,6 @@ class SparkColumnWidget(SparkWidget):
         v_max = max(self.values)
 
 
-        def normalize(v, a, b, scale_min=None, scale_max=None):
-
-            if not scale_min:
-                scale_min = v_min
-
-            if not scale_max:
-                scale_max = v_max
-
-            return max(
-                a,
-                min(
-                    b,
-                    (((v - scale_min) / (scale_max - scale_min) ) * (b - a) + a)
-                )
-            )
-
-
         def item_to_glyph(item):
 
             color = None
@@ -350,8 +351,10 @@ class SparkColumnWidget(SparkWidget):
 
 
                 # idx = scale_value(value, scale_min=scale_min, scale_max=scale_max)
-                idx = normalize(value, 0, len(self.chars)-1,
-                                  scale_min=scale_min, scale_max=scale_max)
+                idx = self.normalize(
+                    value, 0, len(self.chars)-1,
+                    scale_min if scale_min else v_min,
+                    scale_max if scale_max else v_max)
 
                 glyph = self.chars[int(round(idx))]
 
@@ -396,23 +399,50 @@ class SparkBarWidget(SparkWidget):
     def __init__(self, items, width,
                  color_scheme = "mono",
                  label_color = None,
-                 label_values = False,
+                 normalize = None,
                  *args, **kwargs):
 
         self.items = items
         self.width = width
         self.label_color = label_color
-        self.label_values = label_values
 
         values = None
         total = None
+
+        if normalize:
+            values = [ item[1] if isinstance(item, tuple) else item
+                       for item in self.items ]
+            v_min = min(values)
+            v_max = max(values)
+            # print v
+            values = [
+                int(self.normalize(v,
+                                   normalize[0], normalize[1],
+                                   v_min, v_max))
+                for v in values
+            ]
+            # print self.items
+            self.items = [
+                tuple([item[0]] + [values[i]] + (list(item[2:]) if len(item) > 2 else []))
+                if isinstance(item, tuple)
+                else values[i]
+                for i, item in enumerate(self.items) ]
+            # print self.items
+            # raise Exception
+            # print v
+
 
         filtered_items = [ i for i in self.items ]
         # ugly brute force method to eliminate values too small to display
         while True:
             values = [ i[1] if isinstance(i, tuple) else i
                        for i in filtered_items ]
+
+            if not len(values):
+                raise Exception(self.items)
             total = sum(values)
+            v_min = min(values)
+            v_max = max(values)
             charwidth = total / self.width
             try:
                 i = itertools.ifilter(
@@ -421,6 +451,8 @@ class SparkBarWidget(SparkWidget):
                 filtered_items.remove(i)
             except StopIteration:
                 break
+
+
 
         self.colors = self.parse_scheme(color_scheme)
 
@@ -439,7 +471,6 @@ class SparkBarWidget(SparkWidget):
             text = ""
             textcolor = self.label_color or DEFAULT_LABEL_COLOR
             label = None
-            label_value = False
             # label_len = 0
             if isinstance(item, tuple):
                 bcolor = item[0]
@@ -449,9 +480,7 @@ class SparkBarWidget(SparkWidget):
                     if isinstance(labeldef, tuple):
                         label = labeldef[0]
                         if len(labeldef) > 1:
-                            label_value = labeldef[1]
-                            if len(labeldef) > 2:
-                                textcolor = labeldef[2]
+                            textcolor = labeldef[1]
                     elif isinstance(labeldef, str):
                         label = labeldef
 
@@ -461,13 +490,13 @@ class SparkBarWidget(SparkWidget):
                 self.next_color()
                 v = item
 
-            if label:
-                text += label
 
-            if label_value:
-                if label:
-                    text += ":"
-                text += str(v)
+            if label:
+                text += label.format(
+                    value=v,
+                    pct=int(round(v/total*100, 0))
+                )
+
 
             b = position + v + carryover
             if(carryover > 0):
@@ -480,6 +509,7 @@ class SparkBarWidget(SparkWidget):
             rangewidth = b - position# + carryover
             rangechars = int(round(rangewidth/charwidth))
 
+            # print rangewidth, rangechars
             if text and rangechars:
                 fcolor = textcolor
                 chars = u"{:<{m}.{m}}{lastchar}".format(
