@@ -13,17 +13,16 @@ hopefully useful sparkline-like visualizations of data.
 """
 
 
-from __future__ import division
+
 import urwid
 from urwid_utils.palette import *
 from collections import deque
 import math
 import operator
-import itertools
 import collections
 
-BLOCK_VERTICAL = [ unichr(x) for x in range(0x2581, 0x2589) ]
-BLOCK_HORIZONTAL = [ unichr(x) for x in range(0x258F, 0x2587, -1) ]
+BLOCK_VERTICAL = [ chr(x) for x in range(0x2581, 0x2589) ]
+BLOCK_HORIZONTAL = [ chr(x) for x in range(0x258F, 0x2587, -1) ]
 
 DEFAULT_LABEL_COLOR = "light gray"
 DEFAULT_LABEL_COLOR_DARK = "black"
@@ -202,12 +201,12 @@ class SparkWidget(urwid.Text):
         rules = scheme["rules"]
         def rule_function(value):
             return scheme["colors"].get(
-                itertools.ifilter(
+                next(iter(filter(
                     lambda rule: all(
                         OPERATOR_MAP[cond[0]](value, cond[1] if len(cond) > 1 else None)
                         for cond in [rule]
                     ), scheme["rules"]
-                ).next()[-1]
+                )))[-1]
             )
         return rule_function
 
@@ -346,7 +345,7 @@ class SparkColumnWidget(SparkWidget):
                 value = item
 
             if self.underline == "negative" and value < 0:
-                glyph = u" \N{COMBINING DOT BELOW}"
+                glyph = " \N{COMBINING DOT BELOW}"
             else:
 
 
@@ -359,10 +358,10 @@ class SparkColumnWidget(SparkWidget):
                 glyph = self.chars[int(round(idx))]
 
                 if self.underline == "min" and value == v_min:
-                    glyph = u"%s\N{COMBINING TRIPLE UNDERDOT}" %(glyph)
+                    glyph = "%s\N{COMBINING TRIPLE UNDERDOT}" %(glyph)
 
                 if self.overline == "max" and value == v_max:
-                    glyph = u"%s\N{COMBINING THREE DOTS ABOVE}" %(glyph)
+                    glyph = "%s\N{COMBINING THREE DOTS ABOVE}" %(glyph)
 
             if color:
                 return (color, glyph)
@@ -445,9 +444,9 @@ class SparkBarWidget(SparkWidget):
             v_max = max(values)
             charwidth = total / self.width
             try:
-                i = itertools.ifilter(
+                i = next(iter(filter(
                     lambda i: (i[1] if isinstance(i, tuple) else i) < charwidth,
-                    filtered_items).next()
+                    filtered_items)))
                 filtered_items.remove(i)
             except StopIteration:
                 break
@@ -512,12 +511,12 @@ class SparkBarWidget(SparkWidget):
             # print rangewidth, rangechars
             if text and rangechars:
                 fcolor = textcolor
-                chars = u"{:<{m}.{m}}{lastchar}".format(
-                    u"{text:.{n}}".format(
+                chars = "{:<{m}.{m}}{lastchar}".format(
+                    "{text:.{n}}".format(
                         text = text,
                         n = min(len(text), rangechars-1),
                     ), m=rangechars-1,
-                    lastchar = u"\N{HORIZONTAL ELLIPSIS}"
+                    lastchar = "\N{HORIZONTAL ELLIPSIS}"
                     if len(text) > rangechars
                     else text[rangechars-1]
                     if len(text) == rangechars

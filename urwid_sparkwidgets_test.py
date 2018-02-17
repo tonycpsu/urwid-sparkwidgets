@@ -1,9 +1,9 @@
 #!/usr/bin/python
-from __future__ import division
+
 import urwid
 from urwid_utils.palette import *
 import random
-from itertools import chain, izip, repeat, islice
+from itertools import chain, repeat, islice
 from urwid_sparkwidgets import *
 
 
@@ -68,18 +68,18 @@ for fcolor in random_colors + label_colors:
 
 
 def intersperse(delimiter, seq):
-    return islice(chain.from_iterable(izip(repeat(delimiter), seq)), 1, None)
+    return islice(chain.from_iterable(zip(repeat(delimiter), seq)), 1, None)
 
 
 # raise Exception(entries)
 palette = Palette("default", **entries)
 
-spark1 = urwid.Filler(SparkColumnWidget(range(0, 8)))
-spark2 = urwid.Filler(SparkColumnWidget(range(0, 100), color_scheme="rotate_16", scale_min=20, scale_max=90))
+spark1 = urwid.Filler(SparkColumnWidget(list(range(0, 8))))
+spark2 = urwid.Filler(SparkColumnWidget(list(range(0, 100)), color_scheme="rotate_16", scale_min=20, scale_max=90))
 spark3 = urwid.Filler(SparkColumnWidget([5*random.random() for i in range(0, 100)], color_scheme="rotate_true"))
-spark4 = urwid.Filler(SparkColumnWidget(range(-5, 100), color_scheme="signed", underline="negative"))
+spark4 = urwid.Filler(SparkColumnWidget(list(range(-5, 100)), color_scheme="signed", underline="negative"))
 custom_scheme ={ "mode": "rotate",  "colors": ["dark cyan", "brown", "dark magenta"]}
-spark5 = urwid.Filler(SparkColumnWidget(range(1, 20), color_scheme=custom_scheme))
+spark5 = urwid.Filler(SparkColumnWidget(list(range(1, 20)), color_scheme=custom_scheme))
 
 spark_random_text = urwid.Filler(urwid.Text(""))
 spark_random_ph = urwid.WidgetPlaceholder(urwid.Text(""))

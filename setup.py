@@ -9,7 +9,7 @@ from glob import glob
 name = 'urwid_sparkwidgets'
 setup(name=name,
       version='0.0.1',
-      description=u'A set of sparkline-ish widgets for urwid',
+      description='A set of sparkline-ish widgets for urwid',
       author='Ton Cebzanov',
       author_email='tonycpsu@gmail.com',
       url='https://github.com/tonycpsu/urwid-sparkline',
